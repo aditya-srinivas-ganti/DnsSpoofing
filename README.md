@@ -1,78 +1,122 @@
-# DnsSpoofing
-This project detects DNS spoofing (also known as DNS cache poisoning) by verifying if a domain resolves to an unexpected IP address. If spoofing is detected, the system sends an SMS alert using the Textbelt API and logs the incident.
-🛠 Features
-✅ Resolves a domain’s IP address and checks for anomalies.
-✅ Detects possible DNS spoofing attempts.
-✅ Logs suspicious activity in a text file.
-✅ Sends real-time SMS alerts (via Textbelt API) when spoofing is detected.
+# DNS Spoofing Detection System
 
-📂 Project Structure
-bash
-Copy
-Edit
-/dns_spoof_detection
-│── dns_spoof_checker.py   # Main script for DNS spoofing detection
-│── dns_spoof_log.txt      # Log file to store spoofing alerts
-│── README.md              # Documentation (this file)
-└── requirements.txt       # Required dependencies
-⚙️ How It Works
-The script resolves the IP address of a domain (e.g., google.com).
-If the domain fails to resolve or returns an unexpected IP, it is flagged as suspicious.
-The alert is logged in dns_spoof_log.txt.
-An SMS alert is sent to the configured phone number using Textbelt API.
-📥 Installation
-1️⃣ Clone the Repository
-bash
-Copy
-Edit
-git clone https://github.com/your-username/dns-spoof-detection.git
+Monitors DNS traffic in real time, validates query-response mappings against trusted resolvers, and fires SMS alerts the moment something looks wrong.
+
+---
+
+## What It Does
+
+DNS spoofing (cache poisoning) tricks your system into resolving a legitimate domain to an attacker-controlled IP — silently redirecting your traffic. This tool catches that.
+
+It compares your local DNS responses against known-good results and flags any mismatch. When spoofing is detected, it logs the incident and sends an immediate SMS alert via the Textbelt API.
+
+---
+
+## How It Works
+
+```
+Domain queried → Local DNS resolves IP → Compare against expected IP
+                                                    │
+                              ┌─────────────────────┴──────────────────────┐
+                              │ Match                                       │ Mismatch
+                              ✅ Clean                             ❌ Flagged as suspicious
+                                                                            │
+                                                              Log to dns_spoof_log.txt
+                                                              Send SMS alert (Textbelt)
+```
+
+---
+
+## Project Structure
+
+```
+dns_spoof_detection/
+├── dns_spoof_checker.py   # Core detection script
+├── dns_spoof_log.txt      # Incident log (auto-generated)
+├── requirements.txt       # Dependencies
+└── README.md
+```
+
+---
+
+## Quick Start
+
+**1. Clone**
+```bash
+git clone https://github.com/aditya-srinivas-ganti/dns-spoof-detection.git
 cd dns-spoof-detection
-2️⃣ Install Dependencies
-Ensure you have Python installed. Then install the required dependencies:
+```
 
-bash
-Copy
-Edit
+**2. Install dependencies**
+```bash
 pip install -r requirements.txt
-3️⃣ Run the Script
-bash
-Copy
-Edit
+```
+
+**3. Configure**
+
+Open `dns_spoof_checker.py` and set your phone number:
+```python
+PHONE_NUMBER = "+91XXXXXXXXXX"   # Your number
+TEXTBELT_API_KEY = "textbelt"    # Free tier: 1 SMS/day
+```
+
+**4. Run**
+```bash
 python dns_spoof_checker.py
-🔧 Configuration
-Modify These Settings in dns_spoof_checker.py
-Change PHONE_NUMBER to your recipient number.
-Use 'textbelt' as the API key for free SMS alerts.
-python
-Copy
-Edit
-PHONE_NUMBER = "+1234567890"  # Replace with your number
-TEXTBELT_API_KEY = 'textbelt'  # Free key (1 SMS/day)
-📌 Example Output
-Case 1: No Spoofing Detected
+```
 
-bash
-Copy
-Edit
-✅ DNS response: google.com resolves to 142.250.180.206
-✅ No DNS spoofing detected for google.com.
-Case 2: Potential Spoofing Detected
+---
 
-bash
-Copy
-Edit
-❌ DNS resolution failed for google.com: Unexpected IP detected!
-📱 SMS alert sent!
-(An SMS is sent to the configured number)
+## Output
 
-📜 Log File (dns_spoof_log.txt)
-All detected spoofing attempts are logged in this file:
+**Clean resolution**
+```
+✅  google.com → 142.250.180.206  [Expected]
+    No spoofing detected.
+```
 
-rust
-Copy
-Edit
-2025-02-17 15:45:12 - DNS Spoofing detected for google.com.
-🛠 Future Enhancements
-🔹 Add support for multiple DNS resolvers (Google, Cloudflare, OpenDNS).
-🔹 Implement email alerts as an additional notification method.
-🔹 Develop a GUI dashboard to visualize spoofing events.
+**Spoofing detected**
+```
+❌  google.com → 185.220.101.47  [UNEXPECTED]
+    Logging incident...
+    SMS alert sent to +91XXXXXXXXXX
+```
+
+**Log entry (`dns_spoof_log.txt`)**
+```
+2025-02-17 15:45:12 | ALERT | google.com resolved to unexpected IP: 185.220.101.47
+```
+
+---
+
+## Detection Logic
+
+The script flags a response as suspicious when:
+- The domain fails to resolve entirely
+- The returned IP doesn't match the expected/trusted IP for that domain
+- The response deviates from what trusted resolvers (Google `8.8.8.8`, Cloudflare `1.1.1.1`) return
+
+> **Note:** The free Textbelt key allows 1 SMS per day. For production use, swap in a paid API key or configure email alerts instead.
+
+---
+
+## Roadmap
+
+- [ ] Multi-resolver cross-validation (Google, Cloudflare, OpenDNS simultaneously)
+- [ ] Email alerts as fallback notification channel
+- [ ] Continuous monitoring mode with configurable polling interval
+- [ ] Web dashboard to visualize spoofing events over time
+- [ ] PCAP export for forensic analysis
+
+---
+
+## Built With
+
+`Python` · `dnspython` · `Textbelt API`
+
+---
+
+## Author
+
+**Aditya Srinivas Ganti**
+[GitHub](https://github.com/aditya-srinivas-ganti) · [LinkedIn](https://www.linkedin.com/in/aditya-srinivas-67a9bb243/)
